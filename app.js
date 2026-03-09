@@ -17,3 +17,45 @@ function handleLogin() {
   }
 }
 
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-page').style.display !== 'none') handleLogin();
+  if (e.key === 'Escape') closeModalDirect();
+});
+
+async function loadIssues() {
+  showSpinner();
+  try {
+    const res = await fetch(`${API}/issues`);
+    const data = await res.json();
+    allIssues = data.data || data;
+  } catch {
+    allIssues = FALLBACK;
+  }
+  renderIssues();
+}
+
+function showSpinner() {
+  document.getElementById('issues-grid').innerHTML = `<div class="spinner-wrap"><div class="spinner"></div></div>`;
+  document.getElementById('issues-count').textContent = 'Loading...';
+}
+
+function getFiltered(tab, q) {
+  let list = allIssues;
+  if (tab === 'open') list = list.filter(i => i.status === 'open');
+  else if (tab === 'closed') list = list.filter(i => i.status === 'closed');
+  if (q) {
+    const lq = q.toLowerCase();
+    list = list.filter(i =>
+      i.title.toLowerCase().includes(lq) ||
+      i.description.toLowerCase().includes(lq) ||
+      (i.labels || []).some(l => l.toLowerCase().includes(lq)) ||
+      (i.author || '').toLowerCase().includes(lq) ||
+      (i.assignee || '').toLowerCase().includes(lq) ||
+      (i.priority || '').toLowerCase().includes(lq) ||
+      (i.status || '').toLowerCase().includes(lq) ||
+      String(i.id) === lq.replace('#', '')
+    );
+  }
+  return list;
+}
+
